@@ -1,78 +1,101 @@
 local push = require 'push'
 
-WIN_WIDTH = 1280
-WIN_HEIGHT = 720
-
-VIR_WIDTH = 432
-VIR_HEIGHT = 243
-
 function love.load()
   love.graphics.setDefaultFilter('nearest', 'nearest')
-  -- love.window.setMode(WIN_WIDTH, WIN_HEIGHT, {
-  --   fullscreen = false,
-  --   resizable = false,
-  --   vsync = true
-  -- })
-  largeFont = love.graphics.newFont('m3x6.ttf', 48)
-  smallFont = love.graphics.newFont('m3x6.ttf', 16)
+
+  math.randomseed(os.time())
+
+  LargeFont = love.graphics.newFont('m3x6.ttf', 48)
+  SmallFont = love.graphics.newFont('m3x6.ttf', 16)
+
+  --realRes
+  WIN_WIDTH = 1280
+  WIN_HEIGHT = 720
+
+  --virtualRes
+  VIR_WIDTH = 432
+  VIR_HEIGHT = 243
+
   push:setupScreen(VIR_WIDTH, VIR_HEIGHT, WIN_WIDTH, WIN_HEIGHT, {
     fullscreen = false,
     resizable = false,
     vsync = true
   })
 
-  xp1 = 10
-  yp1 = VIR_HEIGHT / 2 - 15
+  --playerPaddle
+  Xp1 = 10
+  Yp1 = VIR_HEIGHT / 2 - 15
 
-  xp2 = VIR_WIDTH - 15
-  yp2 = VIR_HEIGHT / 2 - 15
+  --opponentPaddle
+  Xp2 = VIR_WIDTH - 15
+  Yp2 = VIR_HEIGHT / 2 - 15
+
+
+  BallX = VIR_WIDTH / 2 - 2
+  BallY = VIR_HEIGHT / 2 - 2
+
+  BallDX = math.random(2) == 1 and 100 or -100
+  BallDY = math.random(-50, 50) * 1.5
+
+  PaddleSpeed = 175
+
+  GameState = 'start'
 end
 
-function drawEntities()
+function DrawEntities()
   --score
-  playerScore = 0
-  opponentScore = 0
+  PlayerScore = 0
+  OpponentScore = 0
   love.graphics.clear(58 / 255, 45 / 255, 82 / 255, 1)
-  love.graphics.setFont(largeFont)
-  love.graphics.print(tostring(playerScore), VIR_WIDTH / 2 - 40, VIR_HEIGHT / 2 - 90)
-  love.graphics.print(tostring(opponentScore), VIR_WIDTH / 2 + 30, VIR_HEIGHT / 2 - 90)
+  love.graphics.setFont(LargeFont)
+  love.graphics.print(tostring(PlayerScore), VIR_WIDTH / 2 - 40, VIR_HEIGHT / 2 - 90)
+  love.graphics.print(tostring(OpponentScore), VIR_WIDTH / 2 + 30, VIR_HEIGHT / 2 - 90)
 
   --left paddle
-  love.graphics.rectangle('fill', xp1, yp1, 5, 30)
+  love.graphics.rectangle('fill', Xp1, Yp1, 5, 30)
 
   --right paddle
-  love.graphics.rectangle('fill', xp2, yp2, 5, 30)
+  love.graphics.rectangle('fill', Xp2, Yp2, 5, 30)
 
   --ball
-  love.graphics.rectangle('fill', VIR_WIDTH / 2 - 2, VIR_HEIGHT / 2 - 2, 4, 4)
+  love.graphics.rectangle('fill', BallX, BallY, 4, 4)
 end
 
 function love.keypressed(key)
   if key == 'escape' then
     love.event.quit()
+  elseif key == 'enter' or key == 'return' then
+    if GameState == 'start' then
+      GameState = 'play'
+    else
+      GameState = 'start'
+    end
   end
 end
 
 function love.draw()
   push:start()
-  drawEntities()
+  DrawEntities()
   push:finish()
 end
 
-function love.update()
+function love.update(dt)
   if love.keyboard.isDown("w") then
-    yp1 = yp1 - 1 * 1.75
-  end
-
-  if love.keyboard.isDown("s") then
-    yp1 = yp1 + 1 * 1.75
+    Yp1 = math.max(0, Yp1 - PaddleSpeed * dt)
+  elseif love.keyboard.isDown("s") then
+    Yp1 = math.min(VIR_HEIGHT - 30, Yp1 + PaddleSpeed * dt)
   end
 
   if love.keyboard.isDown("up") then
-    yp2 = yp2 - 1 * 1.75
+    Yp2 = math.max(0, Yp2 - PaddleSpeed * dt)
   end
 
   if love.keyboard.isDown("down") then
-    yp2 = yp2 + 1 * 1.75
+    Yp2 = math.min(VIR_HEIGHT - 30, Yp2 + PaddleSpeed * dt)
+  end
+
+  if GameState == 'play' then
+    BallX = BallX + BallDX * dt
+    BallY = BallY + BallDY * dt
   end
 end
